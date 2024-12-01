@@ -57,6 +57,17 @@ impl core::ops::Mul<f64> for Gradient {
     }
 }
 
+impl core::ops::Div<f64> for Gradient {
+    type Output = Gradient;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        return Gradient {
+            values: self.values.iter().map(|x| x / rhs).collect(),
+        }
+    }
+}
+
+
 #[derive(Clone, Debug)]
 pub enum ValueType {
     Int(f64),
@@ -196,13 +207,19 @@ fn soft_eval(env: SoftEnv, expr: &ast::Expression) -> SoftValue {
                 soft_eval(env.clone(), &args[0]),
                 soft_eval(env.clone(), &args[1]),
             ),
-            "__div" => todo!(),
+            "__div" => soft_division(
+                soft_eval(env.clone(), &args[0]),
+                soft_eval(env.clone(), &args[1]),
+            ),
             "__eq" => todo!(),
             "__gt" => soft_greater_than(
                 soft_eval(env.clone(), &args[0]),
                 soft_eval(env.clone(), &args[1]),
             ),
-            "__lt" => todo!(),
+            "__lt" => soft_less_than(
+                soft_eval(env.clone(), &args[0]),
+                soft_eval(env.clone(), &args[1]),
+            ),
             "__and" => todo!(),
             "__or" => todo!(),
             "__not" => soft_not(soft_eval(env.clone(), &args[0])),
@@ -338,6 +355,10 @@ fn soft_greater_than(left: SoftValue, right: SoftValue) -> SoftValue {
     softgt(left_val, right_val, left.gradient, right.gradient)
 }
 
+fn soft_less_than(left: SoftValue, right: SoftValue) -> SoftValue {
+    soft_greater_than(right, left)
+}
+
 fn soft_multiplication(left: SoftValue, right: SoftValue) -> SoftValue {
     let left_val = get_number_vals(&left);
     let right_val = get_number_vals(&right);
@@ -353,6 +374,32 @@ fn soft_multiplication(left: SoftValue, right: SoftValue) -> SoftValue {
         gradient: result_gradient,
     }
 }
+
+fn soft_division(left: SoftValue, right: SoftValue) -> SoftValue {
+    let left_val = get_number_vals(&left);
+    let right_val = get_number_vals(&right);
+
+    if right_val == 0.0 {
+        panic!("Division by zero in soft interpreter");
+    }
+
+    let result_value = match (left.value, right.value) {
+        (ValueType::Int(_), ValueType::Int(_)) => ValueType::Float(left_val / right_val),
+        _ => ValueType::Float(left_val / right_val),
+    };
+
+    let numerator_gradient = left.gradient.clone() * right_val - right.gradient.clone() * left_val;
+    let denominator = right_val * right_val;
+
+    let result_gradient = numerator_gradient * (1.0 / denominator);
+
+    SoftValue {
+        value: result_value,
+        gradient: result_gradient,
+    }
+}
+
+
 
 pub fn sigmoid(u: f64) -> f64 {
     1.0 / (1.0 + (-1.0 * u / SIGMOID_VARIANCE).exp())

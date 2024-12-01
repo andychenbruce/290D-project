@@ -237,6 +237,40 @@ fn eval_greater_than(env: Env, left: &ast::Expression, right: &ast::Expression) 
         _ => unreachable!(),
     }
 }
+/* 
+fn eval_division(env: Env, left: &ast::Expression, right: &ast::Expression) -> Value {
+    let left_val = eval(env.clone(), left);
+    let right_val = eval(env, right);
+
+    match (left_val, right_val) {
+        (Value::Int(a), Value::Int(b)) => {
+            if b == 0 {
+                panic!("Division by zero");
+            }
+            Value::Float(a as f64 / b as f64) // Convert to Float
+        }
+        (Value::Float(a), Value::Int(b)) => {
+            if b == 0 {
+                panic!("Division by zero");
+            }
+            Value::Float(a / b as f64)
+        }
+        (Value::Int(a), Value::Float(b)) => {
+            if b == 0.0 {
+                panic!("Division by zero");
+            }
+            Value::Float(a as f64 / b)
+        }
+        (Value::Float(a), Value::Float(b)) => {
+            if b == 0.0 {
+                panic!("Division by zero");
+            }
+            Value::Float(a / b)
+        }
+        _ => panic!("Type error in division"),
+    }
+}
+*/
 
 fn eval_less_than(env: Env, left: &ast::Expression, right: &ast::Expression) -> Value {
     let left_val = eval(env.clone(), left);
